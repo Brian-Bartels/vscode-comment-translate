@@ -36,7 +36,13 @@ export class Comment {
         let translationConfiguration = {
         to: this._setting.targetLanguage,
         };
-        return await translate(text, translationConfiguration);
+        return await translate(text, translationConfiguration).then(res => {
+            if (!!res && !!res.data) {
+                  return res.data[0];
+            } else {
+              return "Google Translate API Error";
+            }
+          });
     } 
     /**
      * Returns user settings proxy config
