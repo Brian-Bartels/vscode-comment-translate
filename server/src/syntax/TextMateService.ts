@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as onigasm from 'onigasm';
 import { Registry, IOnigLib,parseRawGrammar,INITIAL } from 'vscode-textmate';
-// import { getNodeModule } from '../util/patch-asar-require';
+
 export interface ILocation {
     readonly filename: string;
     readonly line: number;
