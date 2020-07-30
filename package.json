@@ -38,62 +38,11 @@
     "icon": "doc/image/icon.png",
     "main": "./client/out/extension",
     "contributes": {
-        "commands": [
-            {
-                "command": "commentTranslate.select",
-                "title": "%commentTranslate.command.select%",
-                "category": "Comment Translate"
-            },
-            {
-                "command": "commentTranslate.changeTargetLanguage",
-                "title": "%commentTranslate.command.changeTargetLanguage%",
-                "category": "Comment Translate"
-            },
-            {
-                "command": "commentTranslate.replaceSelections",
-                "title": "%commentTranslate.command.replaceSelections%",
-                "category": "Comment Translate"
-            }
-        ],
-        "keybindings": [
-            {
-                "command": "commentTranslate.select",
-                "key": "ctrl+shift+s"
-            }
-        ],
         "configuration": [
             {
                 "title": "Comment Translate Configuration",
                 "type": "Object",
                 "properties": {
-                    "commentTranslate.targetLanguage": {
-                        "type": "string",
-                        "enum": [
-                            "de",
-                            "es",
-                            "en",
-                            "fr",
-                            "it",
-                            "ja",
-                            "ko",
-                            "ru",
-                            "zh-CN",
-                            "zh-TW"
-                        ],
-                        "enumDescriptions": [
-                            "German",
-                            "Spanish",
-                            "English",
-                            "French",
-                            "Italian",
-                            "Japanese",
-                            "Korean",
-                            "Russian",
-                            "Chinese (Simplified)",
-                            "Chinese (Traditional)"
-                        ],
-                        "description": "%commentTranslate.configuration.targetLanguage%"
-                    },
                     "commentTranslate.multiLineMerge": {
                         "type": "boolean",
                         "default": false,

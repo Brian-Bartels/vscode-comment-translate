@@ -36,9 +36,6 @@ connection.onInitialize((params: InitializeParams) => {
 	let capabilities = params.capabilities;
 	comment = new Comment(params.initializationOptions, documents, connection);
 	patchAsarRequire(params.initializationOptions.appRoot);
-	comment.onTranslate((string) => {
-		connection.console.log(string);
-	});
 	// Does the client support the `workspace/configuration` request?
 	// If not, we will fall back using global settings
 	hasConfigurationCapability =

@@ -1,9 +1,9 @@
-import { TextDocumentPositionParams, Hover, Event, TextDocuments, Connection, TextDocument } from "vscode-languageserver";
-import { BaseTranslate } from "./translate/translate";
-import { GoogleTranslate } from "./translate/GoogleTranslate";
+import { TextDocumentPositionParams, Hover, TextDocuments, Connection, TextDocument } from "vscode-languageserver";
 import * as humanizeString from 'humanize-string';
 import { CommentParse, ICommentOption, ICommentBlock } from "./syntax/CommentParse";
 import { TextMateService } from "./syntax/TextMateService";
+import translate from "google-translate-open-api";
+
 
 export interface ICommentTranslateSettings {
     multiLineMerge: boolean;
@@ -13,15 +13,12 @@ export interface ICommentTranslateSettings {
 
 export class Comment {
 
-    private _translator: BaseTranslate;
     private _textMateService: TextMateService;
     private _setting: ICommentTranslateSettings;
     private _commentParseCache: Map<string, CommentParse> = new Map();
-    public onTranslate: Event<string>;
+
     constructor(extensions: ICommentOption, private _documents: TextDocuments, private _connection: Connection) {
-        this._setting = { multiLineMerge: false, targetLanguage: extensions.userLanguage,concise: false };
-        this._translator = new GoogleTranslate();
-        this.onTranslate = this._translator.onTranslate;
+        this._setting = { multiLineMerge: false, targetLanguage: extensions.userLanguage,concise: false};
         this._textMateService = new TextMateService(extensions.grammarExtensions, extensions.appRoot);
         //关闭文档或内容变更，移除缓存
         _documents.onDidClose(e => this._removeCommentParse(e.document));
@@ -36,12 +33,16 @@ export class Comment {
     }
 
     async translate(text: string) {
-        return await this._translator.translate(text, { to: this._setting.targetLanguage });
-    }
-
-    link(text: string) {
-        return this._translator.link(text, { to: this._setting.targetLanguage });
-    }
+        let translationConfiguration = {
+        to: this._setting.targetLanguage,
+        };
+        return await translate(text, translationConfiguration);
+    } 
+    /**
+     * Returns user settings proxy config
+     *
+     * @returns {string}
+     */
 
     private async _getSelectionContainPosition(textDocumentPosition: TextDocumentPositionParams): Promise<ICommentBlock> {
         let block = await this._connection.sendRequest<ICommentBlock>('selectionContains', textDocumentPosition);
@@ -80,12 +81,12 @@ export class Comment {
                 let humanize = humanizeString(block.comment);
                 let targetLanguageComment = await this.translate(humanize);
                 return {
-                    contents: [`[Comment Translate] ${this.link(humanize)}`, '\r \n' + humanize + ' => ' + targetLanguageComment], range: block.range
+                    contents: [humanize + ' => ' + targetLanguageComment], range: block.range
                 };
             } else {
                 let targetLanguageComment = await this.translate(block.comment);
                 return {
-                    contents: [`[Comment Translate] ${this.link(block.comment)}`, "\r```typescript \n" + targetLanguageComment + " \n```"],
+                    contents: [targetLanguageComment],
                     range: block.range
                 };
             }

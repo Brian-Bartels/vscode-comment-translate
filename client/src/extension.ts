@@ -5,7 +5,7 @@
 'use strict';
 
 import * as path from 'path';
-import { ExtensionContext, extensions, env, commands, window, Selection, Position, Hover } from 'vscode';
+import { ExtensionContext, extensions, env, window, Position } from 'vscode';
 
 import {
     LanguageClient,
@@ -15,7 +15,6 @@ import {
     TextDocumentPositionParams,
     Range
 } from 'vscode-languageclient';
-import { changeTargetLanguage, showTargetLanguageStatusBarItem } from './configuration';
 
 let client: LanguageClient;
 
@@ -109,69 +108,8 @@ export async function activate(context: ExtensionContext) {
         serverOptions,
         clientOptions
     );
-    // client.registerProposedFeatures();
     // Start the client. This will also launch the server
     client.start();
-
-    context.subscriptions.push(commands.registerCommand('commentTranslate.select', async () => {
-        let editor = window.activeTextEditor;
-        if (editor) {
-            let hover = await client.sendRequest<Hover>('lastHover', { uri: editor.document.uri.toString() });
-            if (!hover) return;
-            editor.revealRange(hover.range);
-            editor.selections = [new Selection(new Position(hover.range.start.line, hover.range.start.character), new Position(hover.range.end.line, hover.range.end.character)), ...editor.selections];
-        }
-    }));
-
-
-    async function translateSelection(text: string, selection: Selection) {
-        let translation = await client.sendRequest<string>('translate', text);
-        return { translation, selection };
-    }
-
-    //翻译选择区域并替换
-    context.subscriptions.push(commands.registerCommand('commentTranslate.replaceSelections', async () => {
-        let editor = window.activeTextEditor;
-        if (!(editor && editor.document &&
-            editor.selections.some(selection => !selection.isEmpty))) {
-            return client.outputChannel.append(`No selection！\n`);
-        }
-        let translates = editor.selections
-            .filter(selection => !selection.isEmpty)
-            .map(selection => {
-                let text = editor.document.getText(selection);
-                return translateSelection(text, selection);
-            });
-
-        //添加装饰，提醒用户正在翻译中。 部分内容会原样返回，避免用户等待
-        let decoration = window.createTextEditorDecorationType({
-            color: '#FF2D00',
-            backgroundColor: "transparent"
-        });
-        editor.setDecorations(decoration, editor.selections);
-        let beginTime = Date.now();
-        try {
-            let results = await Promise.all(translates);
-            //最少提示1秒钟
-            setTimeout(() => {
-                decoration.dispose();
-            }, 1000 - (Date.now() - beginTime));
-            editor.edit(builder => {
-                results.forEach(item => {
-                    item.translation && builder.replace(item.selection, item.translation);
-                });
-            });
-        } catch (e) {
-            decoration.dispose();
-            client.outputChannel.append(e);
-        }
-    }));
-
-    // 注册更改目标语言命令
-    context.subscriptions.push(commands.registerCommand('commentTranslate.changeTargetLanguage', changeTargetLanguage));
-    // 注册状态图标
-    let targetBar = await showTargetLanguageStatusBarItem(userLanguage);
-    context.subscriptions.push(targetBar);
 
     //client准备就绪后再其他服务
     await client.onReady();
